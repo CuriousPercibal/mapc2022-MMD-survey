@@ -1,0 +1,7 @@
+{
+    "python": {
+        "sys.path.append": [
+            "./"
+        ]
+    }
+}
