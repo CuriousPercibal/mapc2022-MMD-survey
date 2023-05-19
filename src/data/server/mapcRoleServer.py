@@ -2,6 +2,7 @@ import random
 
 from data.coreData import MapcRole, AgentActionEnum, NormRegulation
 
+
 class MapcRoleServer:
     """
     A repository which contains the current and the future `MapcRoles`

@@ -1,5 +1,6 @@
 from typing import Type
 
+from agent.intention.explorerIntentions.surveyIntention import SurveyIntention
 from data.coreData import Coordinate, AgentIntentionRole
 from data.dataStructure import PriorityQueue, PriorityQueueNode
 from data.intention import Observation
@@ -169,14 +170,16 @@ class IntentionHandler():
         and `IdleIntention` intentsions.
         """
         
+        # surveyInt = SurveyIntention()
         exploreInt = ExploreIntention()
         updateMapInt = UpdateMapIntention()
         idleInt = IdleIntention()
 
+        # self.intentions.insert(PriorityQueueNode(surveyInt, surveyInt.getPriority()))
         self.intentions.insert(PriorityQueueNode(exploreInt, exploreInt.getPriority()))
         self.intentions.insert(PriorityQueueNode(updateMapInt, updateMapInt.getPriority()))
         self.intentions.insert(PriorityQueueNode(idleInt, idleInt.getPriority()))
-    
+
     def isAgentInMarkerCoords(self, observation: Observation) -> bool:
         """
         Returns if the `Agent` or one of its attached entities

@@ -43,6 +43,7 @@ class ExploreIntention(MainAgentIntention):
         # If there are reserved roles for the Agent and it is not already adopted
         # then adopt it. It is important because of the Norms
         agentRoles = observation.simDataServer.getReservedRolesForAgent(observation.agentData.id)
+        #print(f"Reserved roles: {agentRoles}")
         if any(agentRoles) and observation.agentMapcRole != agentRoles[0]:
             return await self.planRoleAdoptPlan(observation, agentRoles[0])
 

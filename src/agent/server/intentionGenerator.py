@@ -1,12 +1,17 @@
 from typing import Tuple
 from random import choice
 
-from data.coreData import Task, AgentIntentionRole, Coordinate, NormRegulation, RegulationType, MapcRole
+from agent.intention.explorerIntentions.surveyIntention import SurveyIntention
+from data.coreData import Task, AgentIntentionRole, Coordinate, NormRegulation, RegulationType, MapcRole, \
+    AgentActionEnum
 from data.map import DynamicMap
 from data.server import IntentionDataServer, SimulationDataServer, MapServer
 
 from agent.intention import CoordinationIntention, BlockProvidingIntention, SingleBlockProvidingIntention, EscapeIntention, ResetIntention
 from agent.agent.agent import Agent
+
+from agent.intention.explorerIntentions.exploreIntention import ExploreIntention
+
 
 class IntentionGenerator():
     """
@@ -41,6 +46,7 @@ class IntentionGenerator():
 
         self.generateTaskOptions(maps, tasks, self.simDataServer.getMaxBlockRegulation())
         self.generateAgentOptions(agents)
+        self.generateSurveyOptions(agents, None)
     
     def generateResetTasksForAgents(self, agents: list[Agent]) -> None:
         """
@@ -90,6 +96,35 @@ class IntentionGenerator():
                 self.mapServer.getMap(agent.id).freeCoordinatesFromTask(agent.id)
                 agent.abandonCurrentTask()
 
+    def generateSurveyOptions(self, agents: list[Agent], maps: list[DynamicMap]) -> None:
+        """
+                Generates global `Task` options for the given `DynamicMaps`.
+                """
+        print(f'Number of GOALZONES discovered {[len(self.mapServer.getMap(agent.id).goalZones) for agent in agents]}, number of agents: {len(agents)}')
+        print(f'Number of ROLEZONES discovered {[len(self.mapServer.getMap(agent.id).roleZones) for agent in agents]}, number of agents: {len(agents)}')
+
+        """
+        Makes the `Agents` generate local options.
+        If an `EscapeIntention` was generated and the given
+        `Agent` is coordinator then make them abandon its current `Task`.
+        """
+
+        for agent in agents:
+            if agent.mapcRole.canPerformAction(AgentActionEnum.SURVEY) and not agent.hasGivenTypeOfIntention(SurveyIntention):
+                print(f"Survey Intention inserted for {agent.id}")
+                agent.abandonCurrentTask()
+                agent.insertIntention(SurveyIntention())
+
+
+    def filterSurveyOptions(self, maps: list[DynamicMap], agents: list[Agent]) -> None:
+        explorerRole = self.simDataServer.mapcRoleServer.getRoleByName('explorer')
+
+        for agent in agents:
+            if agent.mapcRole != explorerRole and self.mapServer.getMap(agent.id).isAnyRoleZone() and agent.hasGivenTypeOfIntention(ExploreIntention):
+                self.simDataServer.reserveRoleForAgent(agent.id, explorerRole, True)
+            if agent.mapcRole == explorerRole and agent.hasGivenTypeOfIntention(SurveyIntention) and agent.checkFinishedCurrentIntention():
+                self.simDataServer.clearRoleReservationsForAgent(agent.id)
+
     def filterOptions(self, maps: list[DynamicMap], agents: list[Agent]) -> None:
         """
         Filters the generated options and makes the `Agents` do the same locally.
@@ -97,6 +132,7 @@ class IntentionGenerator():
 
         self.filterRegulations(agents)
         self.filterTasks(maps, agents)
+        self.filterSurveyOptions(maps, agents)
         
         for agent in agents:
             agent.filterOptions()
@@ -105,6 +141,8 @@ class IntentionGenerator():
                 allowedRoles = self.simDataServer.getAllowedRoles()
 
                 agentCurrentRole = self.simDataServer.getAgentCurrentRole(agent.id)
+
+                print(f"Allowed Roles for {agent.id}: {allowedRoles} - Current: {agentCurrentRole}")
                 if agentCurrentRole in allowedRoles:
                     continue
 
@@ -281,7 +319,7 @@ class IntentionGenerator():
 
                 # Start the task which has the most benefit
                 busyAgentsCount = len(list(filter(lambda a: a.id in map.agentCoordinates, agents))) - len(freeAgents)
-                self.startTask(map, freeAgents, max([task for task in availableTasks], key = lambda task: self.taskValue(task,busyAgentsCount,goalZonesCount)))
+                self.startTask(map, freeAgents, max([task for task in availableTasks], key=lambda task: self.taskValue(task, busyAgentsCount, goalZonesCount)))
 
     def checkFinishedCurrentIntentionForAgents(self, agents: list[Agent]) -> None:
         """

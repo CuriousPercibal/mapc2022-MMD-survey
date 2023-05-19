@@ -13,6 +13,8 @@ class MapValueEnum(Enum):
     BLOCK = 4
     MARKER = 5
     UNKNOWN = 6
+    GOAL = 7
+    ROLE = 8
 
 class Direction(Enum):
     """
@@ -141,6 +143,7 @@ class AgentIntentionRole(Enum):
     COORDINATOR = 1
     BLOCKPROVIDER = 2
     SINGLEBLOCKPROVIDER = 3
+    SURVEYOR = 4
 
     def __str__(self) -> str:
         match self.value:
@@ -152,6 +155,9 @@ class AgentIntentionRole(Enum):
                 return "BLOCKPROVIDER"
             case 3:
                 return "SINGLEBLOCKPROVIDER"
+            case 4:
+                return "SURVEYOR"
+
 
 class RegulationType(Enum):
     """
@@ -167,3 +173,35 @@ class RegulationType(Enum):
                 return "BLOCK"
             case 1:
                 return "ROLE"
+
+
+class EventType(Enum):
+    """
+    Represents a type of event
+    """
+
+    SURVEYED = 0
+    HIT = 1
+
+    def __str__(self) -> str:
+        match self.value:
+            case 0:
+                return "SURVEYED"
+            case 1:
+                return "HIT"
+
+    @staticmethod
+    def from_str(s: str):
+        match s.upper():
+            case "SURVEYED":
+                return EventType.SURVEYED
+            case "HIT":
+                return EventType.HIT
+
+    @staticmethod
+    def isSurveyed(eventType):
+        return eventType == EventType.SURVEYED
+
+    @staticmethod
+    def isHit(eventType):
+        return eventType == EventType.HIT

@@ -19,6 +19,7 @@ class AdoptAction(AgentAction):
         """
 
         try:
+            #print(f"Adopt: {self.roleName}")
             agent.adopt(self.roleName)
             return "success"
         except MapcAgentActionError as e:

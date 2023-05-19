@@ -11,5 +11,5 @@ Required libraries included in *requirements.txt* file.
 ## How to run
 Use *main.py* from the root, where the host, port, team and the password should be added to connect to the server. For debugging, use the explain parameter (which will show what the agents are doing during the simulation).
 ```console
-python .src\main.py --host 127.0.0.1 --port 12300 --team A --pw 1 [--explain]
+python ./src/main.py --host 127.0.0.1 --port 12300 --team A --pw 1 [--explain]
 ```

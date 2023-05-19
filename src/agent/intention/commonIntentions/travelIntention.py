@@ -45,5 +45,5 @@ class TravelIntention(AgentIntention):
         self.coordinate.normalize()
 
     def explain(self) -> str:
-        explanation  = "path " + self.pathFinder.explanation
+        explanation = "path " + self.pathFinder.explanation
         return explanation

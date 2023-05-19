@@ -238,10 +238,14 @@ class AgentProtocol(asyncio.Protocol):
                 await asyncio.wait_for(self.action_requested.wait(), TIMEOUT)
 
             if self.state["percept"].get("lastActionResult") != "success":
+                print(f"Action failed: {self.state['percept']}")
                 if "lastActionResult" in self.state["percept"]:
                     raise AgentActionError(self.state["percept"]["lastActionResult"])
                 else:
                     raise AgentActionError()
+
+            # print("Agent Protocol:")
+            # print(self.)
 
             return self
 
@@ -279,6 +283,9 @@ class AgentProtocol(asyncio.Protocol):
 
     async def submit(self, task: str) -> AgentProtocol:
         return await self.send_action("submit", [task])
+
+    async def survey(self, target: str) -> AgentProtocol:
+        return await self.send_action("survey", [target])
     
     async def adopt(self, role: str) -> AgentProtocol:
         return await self.send_action("adopt", [role])
@@ -642,7 +649,20 @@ class Agent:
             future = asyncio.run_coroutine_threadsafe(coro, self.protocol.loop)
         future.result()
         return self
-    
+
+    def survey(self, task: str) -> Agent:
+        """
+        Submit the pattern of things that are attached to the agent to complete
+        a task.
+        See https://github.com/agentcontest/massim_2020/blob/master/docs/scenario.md#survey.
+        """
+        with self._not_shut_down():
+            coro = self.protocol.survey(task)
+            future = asyncio.run_coroutine_threadsafe(coro, self.protocol.loop)
+            future.result()
+
+        return self
+
     def adopt(self, role: str) -> Agent:
         """
         Adopts the given role.

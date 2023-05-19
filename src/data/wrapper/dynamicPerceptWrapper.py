@@ -1,4 +1,6 @@
 from data.coreData import MapValueEnum, Coordinate, MapValue, Task, TaskRequirement, MapcRole, Norm, NormRegulation, RegulationType
+from data.coreData.event import Event
+
 
 class DynamicPerceptWrapper:
     """
@@ -17,6 +19,7 @@ class DynamicPerceptWrapper:
     things: dict[Coordinate, MapValue]
     markers: dict[Coordinate, MapValue]
     dispensers: dict[Coordinate, MapValue]
+    events: list[Event]
     tasks: list[Task]
     norms: list[Norm]
 
@@ -35,6 +38,8 @@ class DynamicPerceptWrapper:
         self.things = dict()
         self.markers = dict()
         self.dispensers = dict()
+
+        self.events = [Event(eventData, self.convertEntity(eventData["target"])) for eventData in perception["events"]]
 
         self.tasks = [Task(task["name"], task["deadline"], task["reward"],
                 [TaskRequirement(req["x"], req["y"], req["details"], req["type"]) for req in task["requirements"]])
@@ -86,3 +91,9 @@ class DynamicPerceptWrapper:
                 return MapValueEnum.DISPENSER
             case "marker":
                 return MapValueEnum.MARKER
+            case "agent":
+                return MapValueEnum.AGENT
+            case "role":
+                return MapValueEnum.ROLE
+            case "goal":
+                return MapValueEnum.GOAL

@@ -370,18 +370,19 @@ class Agent:
             roleZoneCoord = currentMap.getClosestRoleZone(agentCurrentCoordinate)
             roleZoneCoordDistance = Coordinate.manhattanDistance(agentCurrentCoordinate, roleZoneCoord)
 
-            if len(self.attachedEntities) == 1:
+            if len(self.attachedEntities) >= 1:
                 attachedEntity = self.attachedEntities[0]
+                multiplier = -1 if len(self.attachedEntities) > 1 else 1
 
                 # If has the right block then travelling to the Dispenser is not required
                 if attachedEntity.entityType == MapValueEnum.BLOCK and attachedEntity.details == type:
-                   return 1 + roleZoneCoordDistance / self.mapcRole.getSpeed(1) + Coordinate.manhattanDistance(roleZoneCoord,goalZoneCoord) / self.mapcRole.getSpeed(1)
+                   return 1 + roleZoneCoordDistance / self.mapcRole.getSpeed(multiplier) + Coordinate.manhattanDistance(roleZoneCoord,goalZoneCoord) / self.mapcRole.getSpeed(multiplier)
 
             # Else need to travel to the right Dispenser too
             dispenserCoord = currentMap.getClosestDispenser(type, roleZoneCoord)
 
             return 2 + roleZoneCoordDistance / self.mapcRole.getFreeSpeed() + Coordinate.manhattanDistance(roleZoneCoord, dispenserCoord) / self.mapcRole.getFreeSpeed() + \
-                Coordinate.manhattanDistance(dispenserCoord, goalZoneCoord) / self.mapcRole.getSpeed(1)
+                Coordinate.manhattanDistance(dispenserCoord, goalZoneCoord) / self.mapcRole.getSpeed(0)
 
     def bidSingleBlock(self, type: str, blockRelCoords: list[Coordinate]) -> float:
         """
@@ -430,7 +431,7 @@ class Agent:
                         Coordinate.manhattanDistance(dispenserCoord, currentMap.getClosestFreeGoalZoneForTask(dispenserCoord, blockRelCoords)) / self.mapcRole.getSpeed(1) 
 
         # Else have the wrong Blocks
-        else:
+        elif len(self.attachedEntities) > 1:
             # If current role is fine then calculate the cost
             if self.mapcRole in singleBlockProviderRoles or self.mapcRole in coordinatorRoles:
                 dispenserCoord = currentMap.getClosestDispenser(type, agentCurrentCoordinate)
@@ -443,7 +444,15 @@ class Agent:
                 dispenserCoord = currentMap.getClosestDispenser(type, roleZoneCoord)
                 return 2 + Coordinate.manhattanDistance(agentCurrentCoordinate, roleZoneCoord) / self.mapcRole.getFreeSpeed() + \
                     Coordinate.manhattanDistance(roleZoneCoord, dispenserCoord) / self.mapcRole.getFreeSpeed() + \
-                    Coordinate.manhattanDistance(dispenserCoord, currentMap.getClosestFreeGoalZoneForTask(dispenserCoord, blockRelCoords)) / self.mapcRole.getSpeed(1)
+                    Coordinate.manhattanDistance(dispenserCoord, currentMap.getClosestFreeGoalZoneForTask(dispenserCoord, blockRelCoords)) / self.mapcRole.getSpeed(0)
+        else:
+            roleZoneCoord = currentMap.getClosestRoleZone(agentCurrentCoordinate)
+            dispenserCoord = currentMap.getClosestDispenser(type, roleZoneCoord)
+            return 2 + Coordinate.manhattanDistance(agentCurrentCoordinate,
+                                                    roleZoneCoord) / self.mapcRole.getFreeSpeed() + \
+                Coordinate.manhattanDistance(roleZoneCoord, dispenserCoord) / self.mapcRole.getFreeSpeed() + \
+                Coordinate.manhattanDistance(dispenserCoord, currentMap.getClosestFreeGoalZoneForTask(dispenserCoord,
+                                                                                                      blockRelCoords)) / self.mapcRole.getSpeed(0)
 
     def explain(self) -> str:
         """
