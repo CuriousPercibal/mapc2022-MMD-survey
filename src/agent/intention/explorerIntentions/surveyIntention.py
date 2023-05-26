@@ -30,11 +30,16 @@ class SurveyIntention(ExploreIntention):
         self.currentSurveyTarget = MapValueEnum.GOAL
         self.triedDirections = set()
         self.lastDirection = Direction.NORTH
+        self.goals = {"goal", "dispenser"}
+        self.lastGoal = "goal"
 
     def getPriority(self) -> float:
         return 6.5
 
     async def planNextAction(self, observation: Observation) -> AgentAction:
+        if len(self.goals) == 0:
+            return await super().planNextAction(observation)
+
         surveyEvents = list(filter(lambda event: EventType.isSurveyed(event.type), observation.agentData.dynamicPerceptWrapper.events))
         # print(f"Survey events: {surveyEvents}")
         # print(f"Events: {list(map(lambda x: str(x), observation.agentData.dynamicPerceptWrapper.events))}")
@@ -75,8 +80,10 @@ class SurveyIntention(ExploreIntention):
 
         print(f"{observation.agentData.id} has travel intention: {self.currentTravelIntention is not None}")
         if self.currentTravelIntention is None or self.currentTravelIntention.checkFinished(observation):
+            if self.lastGoal not in self.goals:
+                self.lastGoal = random.choice(list(self.goals))
             # self.surveyed = True
-            return SurveyAction("goal")
+            return SurveyAction(self.lastGoal)
 
         print(f"{observation.agentData.id} is travelling {self.currentTravelIntention.explain()}")
         return await self.currentTravelIntention.planNextAction(observation)
@@ -84,13 +91,23 @@ class SurveyIntention(ExploreIntention):
 
     def checkFinished(self, observation: Observation) -> bool:
         agentCoord = observation.map.getAgentCoordinate(observation.agentData.id)
-        observation.agentData.dynamicPerceptWrapper.goalZones
-        print(f"Is {observation.agentData.id} Finished? {agentCoord in observation.map.goalZones}")
-        return agentCoord in observation.map.goalZones
+        print(f"Is {observation.agentData.id} Finished? {self.goals}")
+        dispensers = observation.map.dispenserMap.dispensers.values()
+        neighbours = agentCoord.getSurroundingNeighbors()
+        dispenserCoords = [c  for b in list(dispensers) for c in b]
+        anyDispenser = [a == b for a in dispenserCoords for b in neighbours]
+        if any(anyDispenser):
+            print(f"{observation.agentData.id} found dispenser. Removing")
+            self.goals = self.goals - {"dispenser"}
+        if agentCoord in observation.map.goalZones:
+            print(f"{observation.agentData.id} found goal. Removing")
+            self.goals = self.goals - {"goal"}
+        if len(self.goals) == 0:
+            return super().checkFinished(observation)
+        return False
 
     def explain(self) -> str:
         if self.currentTravelIntention is not None:
-            return "survey to " + str(
-                self.currentTravelIntention.coordinate) + " " + self.currentTravelIntention.explain()
+            return f"survey to {self.lastGoal}"
         else:
             return "surveying to unknown"

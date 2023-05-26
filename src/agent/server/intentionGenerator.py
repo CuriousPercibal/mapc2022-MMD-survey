@@ -94,6 +94,7 @@ class IntentionGenerator():
 
             if agent.hasGivenTypeOfIntention(EscapeIntention) and agent.hasGivenTypeOfIntention(CoordinationIntention):
                 self.mapServer.getMap(agent.id).freeCoordinatesFromTask(agent.id)
+                self.mapServer.getMap(agent.id)
                 agent.abandonCurrentTask()
 
     def generateSurveyOptions(self, agents: list[Agent], maps: list[DynamicMap]) -> None:
@@ -110,7 +111,9 @@ class IntentionGenerator():
         """
 
         for agent in agents:
-            if agent.mapcRole.canPerformAction(AgentActionEnum.SURVEY) and not agent.hasGivenTypeOfIntention(SurveyIntention):
+            if agent.mapcRole.canPerformAction(AgentActionEnum.SURVEY) \
+                    and agent.hasGivenTypeOfIntention(ExploreIntention) \
+                    and not agent.hasGivenTypeOfIntention(SurveyIntention):
                 print(f"Survey Intention inserted for {agent.id}")
                 agent.abandonCurrentTask()
                 agent.insertIntention(SurveyIntention())
@@ -120,10 +123,17 @@ class IntentionGenerator():
         explorerRole = self.simDataServer.mapcRoleServer.getRoleByName('explorer')
 
         for agent in agents:
-            if agent.mapcRole != explorerRole and self.mapServer.getMap(agent.id).isAnyRoleZone() and agent.hasGivenTypeOfIntention(ExploreIntention):
+            dispensers = self.mapServer.getMap(agent.id).dispenserMap.dispensers.values()
+            dispenserCoords = [c for b in list(dispensers) for c in b]
+
+            if agent.mapcRole != explorerRole \
+                    and self.mapServer.getMap(agent.id).isAnyRoleZone() \
+                    and agent.hasGivenTypeOfIntention(ExploreIntention)\
+                    and (len(self.mapServer.getMap(agent.id).goalZones) == 0 or len(dispenserCoords) == 0):
                 self.simDataServer.reserveRoleForAgent(agent.id, explorerRole, True)
             if agent.mapcRole == explorerRole and agent.hasGivenTypeOfIntention(SurveyIntention) and agent.checkFinishedCurrentIntention():
                 self.simDataServer.clearRoleReservationsForAgent(agent.id)
+                self.simDataServer.reserveRoleForAgent(agent.id, self.simDataServer.mapcRoleServer.getDefaultRole().name)
 
     def filterOptions(self, maps: list[DynamicMap], agents: list[Agent]) -> None:
         """

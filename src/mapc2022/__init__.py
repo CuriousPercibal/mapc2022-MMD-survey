@@ -659,8 +659,7 @@ class Agent:
         with self._not_shut_down():
             coro = self.protocol.survey(task)
             future = asyncio.run_coroutine_threadsafe(coro, self.protocol.loop)
-            future.result()
-
+        future.result()
         return self
 
     def adopt(self, role: str) -> Agent:

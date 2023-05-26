@@ -1,5 +1,6 @@
 from typing import Type
 import mapc2022 as mapc2022
+from agent.action.surveyAction import SurveyAction
 
 from data.coreData import Coordinate, AgentActionEnum, AttachedEntity, MapcRole, MapValueEnum, AgentIntentionRole
 from data.map import MapUpdateData
@@ -276,6 +277,7 @@ class Agent:
             # Clear the attached list, only valid if
             # the submittor has only Task related attached entities
             self.attachedEntities.clear()
+
     
     def setDynamicPerceptAfterAction(self, actionResult: str) -> None:
         """
